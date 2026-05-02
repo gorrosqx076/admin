@@ -913,79 +913,95 @@ window.eliminarColorPapel = function(id) {
 ColoresPapelAdmin();
 
 // --- FUNCIONES DEL MODAL ---
+// --- 1. FUNCIONES PARA EL MODAL (ABRIR/CERRAR) ---
 function abrirModalPedidos() {
     const modal = document.getElementById('modalPedidos');
-    if(modal) modal.style.display = 'flex';
-    // Opcional: refrescar los datos al abrir
+    if (modal) modal.style.display = 'flex';
 }
 
 function cerrarModalPedidos() {
     const modal = document.getElementById('modalPedidos');
-    if(modal) modal.style.display = 'none';
+    if (modal) modal.style.display = 'none';
 }
 
-// Usamos addEventListener para no chocar con otros clics del sitio
-window.addEventListener('click', function(event) {
+// Cerrar si hacen clic fuera del cuadro blanco
+window.addEventListener('click', (e) => {
     const modal = document.getElementById('modalPedidos');
-    if (event.target == modal) cerrarModalPedidos();
+    if (e.target === modal) cerrarModalPedidos();
 });
 
-// --- CARGAR Y BORRAR PEDIDOS ---
-if (typeof db !== 'undefined') {
-    db.ref('Pedidos').on('value', (snapshot) => {
-        const contenedor = document.getElementById('tabla-pedidos-admin');
-        if (!contenedor) return; // Si no existe el ID, nos salimos para no dar error
+// --- 2. LÓGICA PARA LEER PEDIDOS DE FIREBASE ---
+// Nos aseguramos de que Firebase ya cargó antes de pedir los datos
+function inicializarHistorial() {
+    const contenedor = document.getElementById('tabla-pedidos-admin');
+    
+    // Si por algo no encuentra la tabla, avisamos en consola
+    if (!contenedor) {
+        console.error("No se encontró el ID 'tabla-pedidos-admin' en el HTML");
+        return;
+    }
 
+    // Escuchar la base de datos en tiempo real
+    db.ref('Pedidos').on('value', (snapshot) => {
         const pedidos = snapshot.val();
-        
+        console.log("Datos recibidos:", pedidos); // Esto es para que tú veas si llega algo
+
         if (!pedidos) {
             contenedor.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#999;">No hay registros de ventas.</td></tr>';
             return;
         }
 
-        let html = '';
-        // Convertimos a array y volteamos para ver lo más nuevo arriba
-        const pedidosArray = Object.keys(pedidos).map(key => ({ id: key, ...pedidos[key] })).reverse();
+        let htmlFinal = '';
+        // Convertimos a array y ponemos el más nuevo arriba
+        const listaPedidos = Object.keys(pedidos).map(key => ({
+            id: key,
+            ...pedidos[key]
+        })).reverse();
 
-        pedidosArray.forEach(p => {
-            let itemsStr = '';
-            if(p.items && Array.isArray(p.items)) {
-                p.items.forEach(i => {
-                    // Agregué "?" para que si algo viene vacío no se rompa la tabla
-                    if(i.tipo === 'ramo') {
-                        const cantGorros = i.detalles?.gorros?.length || 0;
-                        itemsStr += `<span style="color:#E96B85;">🌸 Ramo (${cantGorros} gorros)</span><br>`;
+        listaPedidos.forEach(pedido => {
+            let detallesItems = "";
+            
+            // Verificamos que existan items para que no truene el código
+            if (pedido.items && Array.isArray(pedido.items)) {
+                pedido.items.forEach(it => {
+                    if (it.tipo === 'ramo') {
+                        detallesItems += `<div style="margin-bottom:4px;">🌸 <b>Ramo:</b> ${it.detalles?.gorros?.length || 0} piezas</div>`;
                     } else {
-                        itemsStr += `• ${i.cantidad || 1}x ${i.nombre || 'Gorro'}<br>`;
+                        detallesItems += `<div style="margin-bottom:4px;">• ${it.cantidad || 1}x ${it.nombre || 'Gorro'}</div>`;
                     }
                 });
             } else {
-                itemsStr = '<span style="color:#999;">Sin detalles</span>';
+                detallesItems = '<span style="color:#bbb;">Sin detalles</span>';
             }
 
-            html += `
-                <tr style="border-bottom:1px solid #f2f2f2;">
-                    <td style="padding:12px; font-size:0.8rem; color:#555;">${p.fecha || '---'}</td>
-                    <td style="padding:12px; line-height:1.4; font-size:0.85rem;">${itemsStr}</td>
-                    <td style="padding:12px; font-weight:bold; color:#850E35;">$${p.total || 0}</td>
+            htmlFinal += `
+                <tr style="border-bottom: 1px solid #f2f2f2;">
+                    <td style="padding:12px; font-size:0.8rem; color:#666;">${pedido.fecha || 'S/F'}</td>
+                    <td style="padding:12px; font-size:0.85rem; line-height:1.3;">${detallesItems}</td>
+                    <td style="padding:12px; font-weight:bold; color:#850E35;">$${pedido.total || 0}</td>
                     <td style="padding:12px; text-align:center;">
-                        <button onclick="borrarPedido('${p.id}')" style="background:#fff0f0; color:#ff4757; border:1px solid #ff4757; border-radius:6px; padding:6px 10px; cursor:pointer; font-size:0.75rem; font-weight:600;">Borrar</button>
+                        <button onclick="eliminarVenta('${pedido.id}')" style="background:#fff0f0; color:#ff4757; border:1px solid #ff4757; border-radius:6px; padding:5px 8px; cursor:pointer; font-size:0.7rem;">Borrar</button>
                     </td>
                 </tr>
             `;
         });
-        contenedor.innerHTML = html;
+
+        contenedor.innerHTML = htmlFinal;
     });
 }
 
-function borrarPedido(id) {
-    if(confirm('¿Seguro que quieres eliminar este registro de venta? No se puede deshacer.')) {
-        db.ref('Pedidos/' + id).remove()
-            .then(() => console.log('Pedido eliminado de Firebase'))
-            .catch((error) => alert('Error al borrar: ' + error));
+// --- 3. FUNCIÓN PARA BORRAR ---
+function eliminarVenta(idPedido) {
+    if (confirm('¿Seguro que quieres borrar este registro?')) {
+        db.ref('Pedidos/' + idPedido).remove()
+            .then(() => console.log("Venta eliminada"))
+            .catch(err => alert("Error al borrar: " + err));
     }
 }
 
+// --- 4. ARRANCAR TODO ---
+// Ejecutamos la carga del historial apenas abra el Admin
+document.addEventListener('DOMContentLoaded', inicializarHistorial);
 // --- LÓGICA DEL ZOOM (SÓLO SI EXISTE EL PREVIEW) ---
 const preview = document.getElementById('adminPreview');
 const previewImg = document.getElementById('adminPreviewImg');
