@@ -507,7 +507,7 @@ function rechazarPedido(orderId) {
         }).then(() => { alert("Producto registrado."); cancelarEdicion(); });
     }
 
-    function cargarEdicion(cat, id) {
+    function Edicion(cat, id) {
         const data = cacheProductos[cat][id];
         if(!data) return;
         document.getElementById('titulo-form').innerText = "✏️ Editando: " + data.Nombre;
@@ -579,7 +579,7 @@ function rechazarPedido(orderId) {
                     </div>
                     <div class="controles">
                         Stock: <input type="number" class="stock-input" value="${stockActual}" onchange="updateStockInd('${cat}','${id}',this.value)">
-                        <button class="btn-edit" onclick="cargarEdicion('${cat}','${id}')">Editar</button>
+                        <button class="btn-edit" onclick="Edicion('${cat}','${id}')">Editar</button>
                         <button class="btn-del" onclick="borrarInd('${cat}','${id}')">Eliminar</button>
                     </div>
                 </div>`;
@@ -624,7 +624,7 @@ function rechazarPedido(orderId) {
         }).then(() => { alert("Paquete guardado."); cancelarEdicionMatch(); });
     }
 
-    function cargarEdicionMatch(id) {
+    function EdicionMatch(id) {
         const data = cacheMatches[id];
         if(!data) return;
         document.getElementById('titulo-form-match').innerText = "✏️ Editando Paquete: " + data.Nombre;
@@ -666,7 +666,7 @@ function rechazarPedido(orderId) {
                     <div><strong>${p.Nombre}</strong><br><small>MXN ${precioMostrado}</small></div></div>
                     <div class="controles">
                         Stock: <input type="number" class="stock-input" value="${p.stock !== undefined ? p.stock : 10}" onchange="updateStockMatch('${id}',this.value)">
-                        <button class="btn-edit" onclick="cargarEdicionMatch('${id}')">Editar</button>
+                        <button class="btn-edit" onclick="EdicionMatch('${id}')">Editar</button>
                         <button class="btn-del" onclick="borrarMatch('${id}')">Eliminar</button>
                     </div>
                 </div>`;
@@ -718,7 +718,7 @@ async function optimizarTodaLaBaseDeDatos() {
             
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
-                img.onerror = () => reject(new Error(`No se pudo cargar la imagen: ${urlOriginal}`));
+                img.onerror = () => reject(new Error(`No se pudo  la imagen: ${urlOriginal}`));
             });
             
             // 2. ¿Es muy grande?
@@ -860,7 +860,7 @@ window.toggleMantenimiento = function() {
 // 🎨 FUNCIONES PARA ADMINISTRAR COLORES DE PAPEL
 // ==========================================
 
-function cargarColoresPapelAdmin() {
+function ColoresPapelAdmin() {
     // Leemos la base de datos de Firebase
     db.ref('Configuracion/Papeles').on('value', (snap) => {
         const lista = document.getElementById('listaColoresAdmin');
@@ -910,52 +910,66 @@ window.eliminarColorPapel = function(id) {
 };
 
 // Ejecutamos la carga al iniciar el admin
-cargarColoresPapelAdmin();
+ColoresPapelAdmin();
 
 // --- FUNCIONES DEL MODAL ---
 function abrirModalPedidos() {
-    document.getElementById('modalPedidos').style.display = 'flex';
+    const modal = document.getElementById('modalPedidos');
+    if(modal) modal.style.display = 'flex';
+    // Opcional: refrescar los datos al abrir
 }
 
 function cerrarModalPedidos() {
-    document.getElementById('modalPedidos').style.display = 'none';
+    const modal = document.getElementById('modalPedidos');
+    if(modal) modal.style.display = 'none';
 }
 
-// Cerrar si hacen clic fuera del cuadro blanco
-window.onclick = function(event) {
+// Usamos addEventListener para no chocar con otros clics del sitio
+window.addEventListener('click', function(event) {
     const modal = document.getElementById('modalPedidos');
     if (event.target == modal) cerrarModalPedidos();
-}
+});
 
 // --- CARGAR Y BORRAR PEDIDOS ---
 if (typeof db !== 'undefined') {
     db.ref('Pedidos').on('value', (snapshot) => {
         const contenedor = document.getElementById('tabla-pedidos-admin');
+        if (!contenedor) return; // Si no existe el ID, nos salimos para no dar error
+
         const pedidos = snapshot.val();
         
         if (!pedidos) {
-            contenedor.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#999;">No hay registros.</td></tr>';
+            contenedor.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#999;">No hay registros de ventas.</td></tr>';
             return;
         }
 
         let html = '';
+        // Convertimos a array y volteamos para ver lo más nuevo arriba
         const pedidosArray = Object.keys(pedidos).map(key => ({ id: key, ...pedidos[key] })).reverse();
 
         pedidosArray.forEach(p => {
             let itemsStr = '';
-            if(p.items) {
+            if(p.items && Array.isArray(p.items)) {
                 p.items.forEach(i => {
-                    itemsStr += i.tipo === 'ramo' ? `Ramo con ${i.detalles.gorros.length} gorros<br>` : `${i.cantidad}x ${i.nombre}<br>`;
+                    // Agregué "?" para que si algo viene vacío no se rompa la tabla
+                    if(i.tipo === 'ramo') {
+                        const cantGorros = i.detalles?.gorros?.length || 0;
+                        itemsStr += `<span style="color:#E96B85;">🌸 Ramo (${cantGorros} gorros)</span><br>`;
+                    } else {
+                        itemsStr += `• ${i.cantidad || 1}x ${i.nombre || 'Gorro'}<br>`;
+                    }
                 });
+            } else {
+                itemsStr = '<span style="color:#999;">Sin detalles</span>';
             }
 
             html += `
-                <tr style="border-bottom:1px solid #f9f9f9;">
-                    <td style="padding:10px; font-size:0.8rem;">${p.fecha || '---'}</td>
-                    <td style="padding:10px; line-height:1.2;">${itemsStr}</td>
-                    <td style="padding:10px; font-weight:bold;">$${p.total}</td>
-                    <td style="padding:10px; text-align:center;">
-                        <button onclick="borrarPedido('${p.id}')" style="background:#ffeded; color:#ff4757; border:1px solid #ff4757; border-radius:5px; padding:5px 8px; cursor:pointer; font-size:0.7rem;">Borrar</button>
+                <tr style="border-bottom:1px solid #f2f2f2;">
+                    <td style="padding:12px; font-size:0.8rem; color:#555;">${p.fecha || '---'}</td>
+                    <td style="padding:12px; line-height:1.4; font-size:0.85rem;">${itemsStr}</td>
+                    <td style="padding:12px; font-weight:bold; color:#850E35;">$${p.total || 0}</td>
+                    <td style="padding:12px; text-align:center;">
+                        <button onclick="borrarPedido('${p.id}')" style="background:#fff0f0; color:#ff4757; border:1px solid #ff4757; border-radius:6px; padding:6px 10px; cursor:pointer; font-size:0.75rem; font-weight:600;">Borrar</button>
                     </td>
                 </tr>
             `;
@@ -967,13 +981,34 @@ if (typeof db !== 'undefined') {
 function borrarPedido(id) {
     if(confirm('¿Seguro que quieres eliminar este registro de venta? No se puede deshacer.')) {
         db.ref('Pedidos/' + id).remove()
-            .then(() => console.log('Pedido eliminado'))
+            .then(() => console.log('Pedido eliminado de Firebase'))
             .catch((error) => alert('Error al borrar: ' + error));
     }
 }
 
+// --- LÓGICA DEL ZOOM (SÓLO SI EXISTE EL PREVIEW) ---
 const preview = document.getElementById('adminPreview');
 const previewImg = document.getElementById('adminPreviewImg');
+
+if(preview && previewImg) {
+    // Esta función la tienes que llamar después de que carguen tus gorros
+    window.activarZoomAdmin = function() {
+        const images = document.querySelectorAll('.img-admin-zoom');
+        images.forEach(img => {
+            img.onmouseenter = (e) => {
+                previewImg.src = e.target.src;
+                preview.style.display = 'block';
+            };
+            img.onmousemove = (e) => {
+                preview.style.left = (e.clientX + 20) + 'px';
+                preview.style.top = (e.clientY - 150) + 'px';
+            };
+            img.onmouseleave = () => {
+                preview.style.display = 'none';
+            };
+        });
+    };
+}
 
 // Función para activar el zoom en las fotos del admin
 function activarZoomAdmin() {
