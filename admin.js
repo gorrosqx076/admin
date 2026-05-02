@@ -971,3 +971,33 @@ function borrarPedido(id) {
             .catch((error) => alert('Error al borrar: ' + error));
     }
 }
+
+const preview = document.getElementById('adminPreview');
+const previewImg = document.getElementById('adminPreviewImg');
+
+// Función para activar el zoom en las fotos del admin
+function activarZoomAdmin() {
+    // Buscamos todas las imágenes de productos en el admin
+    // Asegúrate de que tus imágenes de gorros tengan la clase 'img-admin-zoom'
+    const images = document.querySelectorAll('.img-admin-zoom');
+
+    images.forEach(img => {
+        img.onmouseenter = (e) => {
+            previewImg.src = e.target.src;
+            preview.style.display = 'block';
+        };
+
+        img.onmousemove = (e) => {
+            // Posicionamos el zoom a un lado del cursor
+            preview.style.left = (e.clientX + 20) + 'px';
+            preview.style.top = (e.clientY - 150) + 'px';
+        };
+
+        img.onmouseleave = () => {
+            preview.style.display = 'none';
+        };
+    });
+}
+
+// Ejecuta esta función después de que carguen tus gorros de Firebase
+// Ejemplo: db.ref('Gorros').on('value', (snap) => { ... activarZoomAdmin(); });
