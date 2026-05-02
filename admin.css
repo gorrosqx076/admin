@@ -144,3 +144,29 @@
 }
 
 .btn-basura:hover { background: #e74c3c; color: white; }
+
+
+/* Estilo para la vista previa rápida en Admin */
+.preview-container {
+    position: fixed;
+    display: none;
+    z-index: 10001;
+    pointer-events: none; /* Para que no estorbe al hacer clic */
+    background: white;
+    border: 3px solid #850E35;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    padding: 5px;
+}
+
+.preview-container img {
+    max-width: 300px; /* Tamaño de la "lupa" */
+    height: auto;
+    display: block;
+    border-radius: 5px;
+}
+
+/* Clase para identificar qué imágenes tienen zoom */
+.img-admin-zoom {
+    cursor: zoom-in;
+}
