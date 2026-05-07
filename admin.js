@@ -1079,7 +1079,7 @@ let COSTO_ARMADO = 150;
 // --- FUNCIÓN PARA GUARDAR EL NUEVO COSTO DE ARMADO ---
 window.guardarCostoArmado = function() {
     // OJO: Cambia 'id-de-tu-input' por el ID que tenga el cuadro de texto donde escribes el número en tu HTML
-    const inputCosto = document.getElementById('id-de-tu-input'); 
+    const inputCosto = document.getElementById('input-costo-armado');
     
     if (!inputCosto) {
         alert("¡Falta el ID! Revisa el código del input en tu HTML.");
