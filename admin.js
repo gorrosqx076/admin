@@ -1097,7 +1097,7 @@ window.guardarCostoArmado = function() {
     // Subimos el nuevo precio a Firebase
     db.ref('Configuracion/CostoArmado').set(nuevoCosto)
         .then(() => {
-            alert("¡Costo de armado actualizado con éxito, perro!");
+            alert("Costo de armado actualizado con éxito");
         })
         .catch((error) => {
             console.error("Error al guardar en Firebase:", error);
