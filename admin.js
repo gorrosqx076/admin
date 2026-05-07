@@ -1052,31 +1052,27 @@ function activarZoomAdmin() {
 
 // Ejecuta esta función después de que carguen tus gorros de Firebase
 // Ejemplo: db.ref('Gorros').on('value', (snap) => { ... activarZoomAdmin(); });
-// --- LÓGICA DEL COSTO DE ARMADO ---
+let COSTO_ARMADO = 150; 
 
-// 1. Cargar el costo actual cuando entras al admin
-firebase.database().ref('Configuracion/CostoArmado').on('value', (snap) => {
-    if(snap.exists()) {
-        const inputCosto = document.getElementById('input-costo-armado');
-        if(inputCosto) inputCosto.value = snap.val();
-    }
-});
-
-// 2. Función para guardar el nuevo costo al darle clic al botón
-window.guardarCostoArmado = function() {
-    const nuevoCosto = document.getElementById('input-costo-armado').value;
-    
-    if(!nuevoCosto || nuevoCosto < 0) {
-        alert("Ingresa un costo de armado válido, güey.");
-        return;
-    }
-
-    firebase.database().ref('Configuracion/CostoArmado').set(parseFloat(nuevoCosto))
-        .then(() => {
-            alert("¡A huevo! El costo de armado se actualizó exitosamente.");
-        })
-        .catch((error) => {
-            console.error("Error al guardar:", error);
-            alert("Chale, hubo un error al guardar en la base de datos.");
+        // Escuchar el costo dinámico desde Firebase
+        db.ref('Configuracion/CostoArmado').on('value', (snapshot) => {
+            if(snapshot.exists()) {
+                COSTO_ARMADO = parseFloat(snapshot.val());
+                
+                // 1. Actualiza todos los textos de "Costo de Armado: $X"
+                document.querySelectorAll('.label-costo-armado').forEach(elemento => {
+                    elemento.innerText = `$${COSTO_ARMADO}`;
+                });
+                
+                // 2. Actualiza los totales grandes
+                const tDesktop = document.getElementById('total-ramo-desktop');
+                const tMobile = document.getElementById('total-ramo-mobile');
+                
+                if (typeof gorrosSeleccionados !== 'undefined' && gorrosSeleccionados.length === 0) {
+                    if(tDesktop) tDesktop.innerText = `$${COSTO_ARMADO}`;
+                    if(tMobile) tMobile.innerText = `$${COSTO_ARMADO}`;
+                } else if (typeof actualizarInterfaz === "function") {
+                    actualizarInterfaz();
+                }
+            }
         });
-};
