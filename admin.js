@@ -1076,3 +1076,31 @@ let COSTO_ARMADO = 150;
                 }
             }
         });
+// --- FUNCIÓN PARA GUARDAR EL NUEVO COSTO DE ARMADO ---
+window.guardarCostoArmado = function() {
+    // OJO: Cambia 'id-de-tu-input' por el ID que tenga el cuadro de texto donde escribes el número en tu HTML
+    const inputCosto = document.getElementById('id-de-tu-input'); 
+    
+    if (!inputCosto) {
+        alert("¡Falta el ID! Revisa el código del input en tu HTML.");
+        return;
+    }
+
+    const nuevoCosto = parseFloat(inputCosto.value);
+
+    // Validamos que sí hayan puesto un número
+    if (isNaN(nuevoCosto) || nuevoCosto < 0) {
+        alert("Por favor ingresa un costo válido, güey.");
+        return;
+    }
+
+    // Subimos el nuevo precio a Firebase
+    db.ref('Configuracion/CostoArmado').set(nuevoCosto)
+        .then(() => {
+            alert("¡Costo de armado actualizado con éxito, perro!");
+        })
+        .catch((error) => {
+            console.error("Error al guardar en Firebase:", error);
+            alert("Hubo un error al actualizar el costo.");
+        });
+};
