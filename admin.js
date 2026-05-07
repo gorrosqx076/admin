@@ -1052,3 +1052,31 @@ function activarZoomAdmin() {
 
 // Ejecuta esta función después de que carguen tus gorros de Firebase
 // Ejemplo: db.ref('Gorros').on('value', (snap) => { ... activarZoomAdmin(); });
+// --- LÓGICA DEL COSTO DE ARMADO ---
+
+// 1. Cargar el costo actual cuando entras al admin
+firebase.database().ref('Configuracion/CostoArmado').on('value', (snap) => {
+    if(snap.exists()) {
+        const inputCosto = document.getElementById('input-costo-armado');
+        if(inputCosto) inputCosto.value = snap.val();
+    }
+});
+
+// 2. Función para guardar el nuevo costo al darle clic al botón
+window.guardarCostoArmado = function() {
+    const nuevoCosto = document.getElementById('input-costo-armado').value;
+    
+    if(!nuevoCosto || nuevoCosto < 0) {
+        alert("Ingresa un costo de armado válido, güey.");
+        return;
+    }
+
+    firebase.database().ref('Configuracion/CostoArmado').set(parseFloat(nuevoCosto))
+        .then(() => {
+            alert("¡A huevo! El costo de armado se actualizó exitosamente.");
+        })
+        .catch((error) => {
+            console.error("Error al guardar:", error);
+            alert("Chale, hubo un error al guardar en la base de datos.");
+        });
+};
